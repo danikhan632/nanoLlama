@@ -10,7 +10,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 import torch.distributed as dist
 
-from model import ModelArgs, Transformer
+from model import ModelArgs, Llama
 from transformers import LlamaTokenizer
 
 # -----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ model_args = ModelArgs(
     vocab_size=meta_vocab_size, max_seq_len=block_size,
     hidden_dim=hidden_dim
 )
-model = Transformer(model_args)
+model = Llama(model_args)
 
 if init_from == 'scratch':
     print("Initializing a new model from scratch")

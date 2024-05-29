@@ -4,7 +4,7 @@ import pickle
 from contextlib import nullcontext
 import torch
 from transformers import LlamaTokenizer
-from model import ModelArgs, Transformer
+from model import ModelArgs, Llama
 
 # -----------------------------------------------------------------------------
 init_from = 'resume'  # either 'resume' (from an out_dir) or a path to a checkpoint
@@ -36,7 +36,7 @@ if init_from == 'resume':
     ckpt_path = os.path.join(out_dir, 'ckpt.pt')
     checkpoint = torch.load(ckpt_path, map_location=device)
     model_args = checkpoint['model_args']
-    model = Transformer(model_args)
+    model = Llama(model_args)
     state_dict = checkpoint['model']
     model.load_state_dict(state_dict)
 else:
@@ -44,7 +44,7 @@ else:
     print(f"Loading model from {init_from}")
     checkpoint = torch.load(init_from, map_location=device)
     model_args = checkpoint['model_args']
-    model = Transformer(model_args)
+    model = Llama(model_args)
     state_dict = checkpoint['model']
     model.load_state_dict(state_dict)
 

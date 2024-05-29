@@ -74,7 +74,7 @@ def apply_rotary_emb(
     xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(3)
     return xq_out.type_as(xq), xk_out.type_as(xk)
 
-class Attention(nn.Module):
+class CasualSelfAttention(nn.Module):
     def __init__(self, args: ModelArgs):
         super().__init__()
         self.n_local_heads = args.n_heads
@@ -117,13 +117,13 @@ class FeedForward(nn.Module):
     def forward(self, x):
         return self.w2(F.silu(self.w1(x)) * self.w3(x))
 
-class TransformerBlock(nn.Module):
+class MLP(nn.Module):
     def __init__(self, layer_id: int, args: ModelArgs):
         super().__init__()
         self.n_heads = args.n_heads
         self.dim = args.dim
         self.head_dim = args.dim // args.n_heads
-        self.attention = Attention(args)
+        self.attention = CasualSelfAttention(args)
         self.feed_forward = FeedForward(dim=args.dim, hidden_dim=args.hidden_dim)
         self.layer_id = layer_id
         self.attention_norm = RMSNorm(args.dim)
@@ -135,7 +135,7 @@ class TransformerBlock(nn.Module):
 
         return out
 
-class Transformer(nn.Module):
+class Llama(nn.Module):
     def __init__(self, params: ModelArgs):
         super().__init__()
         self.params = params
@@ -147,7 +147,7 @@ class Transformer(nn.Module):
 
         self.layers = nn.ModuleList()
         for layer_id in range(params.n_layers):
-            self.layers.append(TransformerBlock(layer_id, params))
+            self.layers.append(MLP(layer_id, params))
 
         self.norm = RMSNorm(params.dim)
         self.output = nn.Linear(params.dim, params.vocab_size, bias=False)
