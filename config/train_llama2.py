@@ -32,17 +32,6 @@ beta2 = 0.99 # make a bit bigger because number of tokens per iter is small
 
 warmup_iters = 0 # not super necessary potentially
 
-# on macbook also add
-# device = 'cpu'  # run on cpu only
-# compile = False # do not torch compile the model
-
-# config for training GPT-2 (124M) down to very nice loss of ~2.85 on 1 node of 8X A100 40GB
-# launch as the following (e.g. in a screen session) and wait ~5 days:
-# $ torchrun --standalone --nproc_per_node=8 train.py config/train_gpt2.py
-
-wandb_log = True
-wandb_project = 'owt'
-wandb_run_name='gpt2-124M'
 
 # these make the total batch size be ~0.5M
 # 12 batch size * 1024 block size * 5 gradaccum * 8 GPUs = 491,520

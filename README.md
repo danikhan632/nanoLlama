@@ -48,3 +48,13 @@ $ curl https://storage.googleapis.com/compiled-blob/val.bin > ./data/openwebtext
 ```
 $ torchrun --standalone --nproc_per_node=8 train.py config/train_medllama.py
 ```
+
+cd workspace
+apt-get update
+apt install -y curl wget git unzip vim
+git clone https://github.com/danikhan632/nanoLlama.git
+python3 -m pip install torch numpy transformers datasets tiktoken wandb tqdm sentencepiece
+cd nanoLlama
+curl https://storage.googleapis.com/compiled-blob/train.bin > ./data/openwebtext/train.bin
+curl https://storage.googleapis.com/compiled-blob/val.bin > ./data/openwebtext/val.bin
+python3 train.py config/train_llama.py
