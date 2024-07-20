@@ -48,6 +48,9 @@ $ curl https://storage.googleapis.com/compiled-blob/val.bin > ./data/openwebtext
 ```
 $ torchrun --standalone --nproc_per_node=8 train.py config/train_medllama.py
 ```
+
+Train on runpod
+```bash
 apt-get update
 apt install -y curl wget git unzip vim
 cd workspace
@@ -57,4 +60,7 @@ cd nanoLlama
 curl https://storage.googleapis.com/compiled-blob/train.bin > ./data/openwebtext/train.bin
 curl https://storage.googleapis.com/compiled-blob/val.bin > ./data/openwebtext/val.bin
 
-python3 train.py config/train_llama_A100.py --compile=False
+python3 train.py config/train_llama_A100.py 
+
+```
+
