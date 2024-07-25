@@ -1,26 +1,15 @@
 
 
 import math
-import inspect
 from dataclasses import dataclass
+from flash_attention import FlashAttention
 
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-import math
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from dataclasses import dataclass
-
-import math
-from dataclasses import dataclass
 from typing import Optional, Tuple
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 @dataclass
 class ModelArgs:
@@ -30,6 +19,7 @@ class ModelArgs:
     vocab_size: int = 32000
     max_seq_len: int = 1024
     hidden_dim: int = 11008
+    flash_attn: bool = False
 
 class RMSNorm(nn.Module):
     def __init__(self, dim: int, eps: float = 1e-6):
@@ -74,9 +64,14 @@ def apply_rotary_emb(
     xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(3)
     return xq_out.type_as(xq), xk_out.type_as(xk)
 
+
+
+
+
 class CasualSelfAttention(nn.Module):
     def __init__(self, args: ModelArgs):
         super().__init__()
+        self.flash_attn = args.flash_attn
         self.n_local_heads = args.n_heads
         self.head_dim = args.dim // args.n_heads
 
@@ -99,13 +94,29 @@ class CasualSelfAttention(nn.Module):
         xk = xk.transpose(1, 2)
         xv = xv.transpose(1, 2)
 
-        scores = torch.matmul(xq, xk.transpose(2, 3)) / math.sqrt(self.head_dim)
-        if mask is not None:
-            scores = scores + mask
-        scores = F.softmax(scores.float(), dim=-1).type_as(xq)
-        output = torch.matmul(scores, xv)
+        if self.flash_attn:
+            # Flash Attention
+            sm_scale = 1.0 / math.sqrt(self.head_dim)
+            output = FlashAttention.apply(xq, xk, xv, sm_scale)
+
+            # If mask is provided, apply it after FlashAttention
+            # Note: This is not as efficient as applying the mask within FlashAttention
+            if mask is not None:
+                mask = mask.view(bsz, 1, seqlen, seqlen)
+                output = output * mask.expand_as(output)
+        else:
+            # Normal Attention
+            scores = torch.matmul(xq, xk.transpose(2, 3)) / math.sqrt(self.head_dim)
+            if mask is not None:
+                scores = scores + mask
+            scores = F.softmax(scores.float(), dim=-1).type_as(xq)
+            output = torch.matmul(scores, xv)
+
         output = output.transpose(1, 2).contiguous().view(bsz, seqlen, -1)
         return self.wo(output)
+
+
+
 
 class FeedForward(nn.Module):
     def __init__(self, dim: int, hidden_dim: int):

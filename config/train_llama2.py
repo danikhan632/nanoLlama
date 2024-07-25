@@ -8,7 +8,7 @@ out_dir = 'out-llama'
 always_save_checkpoint = False
 
 wandb_log = False # override via command line if you like
-
+flash_attn = False
 gradient_accumulation_steps = 5 * 4
 
 batch_size = 64
